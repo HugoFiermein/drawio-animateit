@@ -98,9 +98,3 @@ The plugin file must be hosted at a publicly accessible URL (e.g. GitHub Pages).
 | draw.io Desktop (Windows) | ✅ (requires `--enable-plugins`) |
 | draw.io Web (app.diagrams.net) | ✅ |
 | draw.io for Confluence / Jira | ❌ (plugins not supported) |
-
----
-
-## License
-
-MIT — free to use, modify, and distribute.
