@@ -1,3 +1,5 @@
+[🇷🇺 На русском языке](README.ru.md)
+
 # AnimateIT! — draw.io Plugin
 <img width="920" height="602" alt="20260501-2139-12 2434234" src="https://github.com/user-attachments/assets/280c3808-6bdc-4f05-83a6-1f834713abe1" />
 
