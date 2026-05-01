@@ -1,60 +1,67 @@
 /**
  * AnimateIT! for draw.io
- * При выделении линии: поднимает на передний план, делает толще/ярче, включает анимацию.
- * При снятии выделения: возвращает оригинальный стиль.
- * Включить/выключить: Дополнительно → AnimateIT! или Ctrl+Alt+I
+ *
+ * Highlights selected connectors with flow animation, temporarily brings them
+ * to the front, and restores their original style and layer order on deselect.
  */
 Draw.loadPlugin(function(ui) {
-
     var graph = ui.editor.graph;
-
-    // Состояние плагина
     var enabled = true;
-
-    // Хранилище оригинальных стилей { cellId: originalStyle }
     var originalStyles = {};
-
-    // --- Вспомогательные функции ---
+    var originalOrders = {};
 
     function applyAnimation(cell) {
         if (!graph.getModel().isEdge(cell)) return;
+
+        var model = graph.getModel();
         var id = cell.getId();
         if (originalStyles[id] !== undefined) return;
 
-        var currentStyle = graph.getModel().getStyle(cell) || '';
+        var currentStyle = model.getStyle(cell) || '';
         originalStyles[id] = currentStyle;
 
-        var newStyle = currentStyle;
-        newStyle = newStyle.replace(/flowAnimation=\d;?/g, '');
-        newStyle = newStyle.replace(/strokeWidth=[\d.]+;?/g, '');
-        newStyle = newStyle.replace(/strokeColor=[^;]+;?/g, '');
-        newStyle = newStyle.replace(/opacity=[\d.]+;?/g, '');
-        if (newStyle.length > 0 && newStyle[newStyle.length - 1] !== ';') {
-            newStyle += ';';
-        }
-        newStyle += 'flowAnimation=1;strokeWidth=4;strokeColor=#00FF44;opacity=100;';
+        var parent = model.getParent(cell);
+        originalOrders[id] = {
+            parent: parent,
+            index: parent ? parent.getIndex(cell) : -1
+        };
 
-        graph.getModel().beginUpdate();
+        var newStyle = mxUtils.setStyle(currentStyle, 'flowAnimation', '1');
+        newStyle = mxUtils.setStyle(newStyle, 'strokeWidth', '4');
+        newStyle = mxUtils.setStyle(newStyle, 'strokeColor', '#00FF44');
+        newStyle = mxUtils.setStyle(newStyle, 'opacity', '100');
+
+        model.beginUpdate();
         try {
-            graph.getModel().setStyle(cell, newStyle);
+            model.setStyle(cell, newStyle);
             graph.orderCells(false, [cell]);
         } finally {
-            graph.getModel().endUpdate();
+            model.endUpdate();
         }
     }
 
     function removeAnimation(cell) {
         if (!graph.getModel().isEdge(cell)) return;
+
+        var model = graph.getModel();
         var id = cell.getId();
         if (originalStyles[id] === undefined) return;
 
-        graph.getModel().beginUpdate();
+        model.beginUpdate();
         try {
-            graph.getModel().setStyle(cell, originalStyles[id]);
+            model.setStyle(cell, originalStyles[id]);
+
+            var order = originalOrders[id];
+            if (order && order.parent && model.getParent(cell) === order.parent) {
+                var maxIndex = Math.max(0, model.getChildCount(order.parent) - 1);
+                model.add(order.parent, cell, Math.min(order.index, maxIndex));
+            }
         } finally {
-            graph.getModel().endUpdate();
+            model.endUpdate();
         }
+
         delete originalStyles[id];
+        delete originalOrders[id];
     }
 
     function removeAllAnimations() {
@@ -62,7 +69,9 @@ Draw.loadPlugin(function(ui) {
             var cell = graph.getModel().getCell(id);
             if (cell) removeAnimation(cell);
         });
+
         originalStyles = {};
+        originalOrders = {};
     }
 
     function togglePlugin() {
@@ -70,28 +79,25 @@ Draw.loadPlugin(function(ui) {
         if (!enabled) removeAllAnimations();
     }
 
-    // --- Слушатель выделения ---
-
     graph.getSelectionModel().addListener(mxEvent.CHANGE, function(sender, evt) {
         if (!enabled) return;
-        var selected   = evt.getProperty('removed') || [];
-        var deselected = evt.getProperty('added')   || [];
+
+        // mxGraphSelectionModel keeps these event property names inverted for compatibility.
+        var selected = evt.getProperty('removed') || [];
+        var deselected = evt.getProperty('added') || [];
+
         selected.forEach(function(cell) { applyAnimation(cell); });
         deselected.forEach(function(cell) { removeAnimation(cell); });
     });
 
-    // --- Фикс: снимаем анимацию после перемещения линии ---
-
     graph.addListener(mxEvent.MOVE_CELLS, function(sender, evt) {
         if (!enabled) return;
+
         var cells = evt.getProperty('cells') || [];
         cells.forEach(function(cell) {
             if (graph.getModel().isEdge(cell)) removeAnimation(cell);
         });
     });
-
-    // --- Горячая клавиша Ctrl+Alt+I через нативный keydown ---
-    // bindAction не поддерживает Alt, поэтому вешаем напрямую на контейнер
 
     mxEvent.addListener(graph.container, 'keydown', function(evt) {
         if (evt.ctrlKey && evt.altKey && !evt.shiftKey && evt.keyCode === 73) {
@@ -100,8 +106,6 @@ Draw.loadPlugin(function(ui) {
         }
     });
 
-    // --- Кнопка в меню Дополнительно ---
-
     var origExtrasMenu = ui.menus.get('extras');
     if (origExtrasMenu) {
         var origFunct = origExtrasMenu.funct;
@@ -109,12 +113,11 @@ Draw.loadPlugin(function(ui) {
             origFunct.apply(this, arguments);
             menu.addSeparator(parent);
             menu.addItem(
-                (enabled ? '✅' : '⬜') + ' AnimateIT!  (Ctrl+Alt+I)',
+                (enabled ? 'ON' : 'OFF') + ' AnimateIT! (Ctrl+Alt+I)',
                 null,
                 function() { togglePlugin(); },
                 parent
             );
         };
     }
-
 });

@@ -1,108 +1,123 @@
-[🇷🇺 На русском языке](README.ru.md)
+[На русском](README.ru.md)
 
-# AnimateIT! — draw.io Plugin
-<img width="920" height="602" alt="20260501-2139-12 2434234" src="https://github.com/user-attachments/assets/280c3808-6bdc-4f05-83a6-1f834713abe1" />
+# AnimateIT! for draw.io
 
-A lightweight draw.io plugin that animates connectors (edges) on selection. When you click a connector, it lights up with a flow animation, rises above overlapping lines, and snaps back to its original style the moment you deselect it.
+AnimateIT! makes selected draw.io / diagrams.net connectors easier to follow. When you select an edge, it gets a bright flow highlight, temporarily moves above overlapping lines, and then returns to its original style and layer order when deselected.
 
-Designed for network diagrams, rack layouts, and any diagram where connectors overlap and are hard to trace visually.
+It is built for network diagrams, rack layouts, infrastructure maps, and other diagrams where many connectors cross each other.
 
----
+<img width="920" height="602" alt="AnimateIT preview" src="https://github.com/user-attachments/assets/280c3808-6bdc-4f05-83a6-1f834713abe1" />
 
 ## Features
 
-- **Flow animation on select** — clicking any connector triggers a animated flow effect along the line
-- **Brings line to front** — the selected connector rises above all overlapping lines so it's always visible
-- **Visual highlight** — selected connector becomes thicker (`strokeWidth=4`) and bright green (`#00FF44`)
-- **Non-destructive** — original style is fully restored on deselect; nothing is permanently changed in your diagram
-- **Move-safe** — animation is cleanly removed if you drag/reposition the connector
-- **Toggle on/off** — disable the plugin at any time via menu or keyboard shortcut without restarting draw.io
+- Flow animation on selected connectors
+- Bright green highlight and increased stroke width
+- Temporary bring-to-front behavior while a connector is selected
+- Restoration of the original style and layer order on deselect
+- Toggle from the draw.io **Extras** menu or with `Ctrl + Alt + I`
+- Desktop plugin and browser userscript variants
 
----
+## Files
 
-## Keyboard Shortcut
-
-| Action | Shortcut |
+| File | Purpose |
 |---|---|
-| Toggle AnimateIT! on/off | `Ctrl + Alt + I` |
+| `AnimateIT.js` | Native draw.io plugin for draw.io Desktop and self-hosted diagrams.net |
+| `AnimateIT.user.js` | Tampermonkey userscript for app.diagrams.net / draw.io in the browser |
+| `README.md` | English documentation |
+| `README.ru.md` | Russian documentation |
 
-You can also toggle it via **Extras → AnimateIT!** in the menu bar (shows ✅ when active, ⬜ when disabled).
+## Browser Installation With Tampermonkey
 
----
+Use this option for the official web editor at [app.diagrams.net](https://app.diagrams.net/). The userscript is the most practical browser approach because normal external plugin loading can be blocked by the site's content security policy.
 
-## Installation — Desktop App
+1. Install Tampermonkey.
+2. In Chrome, open **Extensions -> Tampermonkey -> Details** and enable **Allow user scripts**. Without this setting the script may appear installed but never run.
+3. Open Tampermonkey and choose **Create a new script**.
+4. Paste the full contents of `AnimateIT.user.js`.
+5. Save the script with `Ctrl + S`.
+6. Open or hard-reload [app.diagrams.net](https://app.diagrams.net/) with `Ctrl + F5`.
 
-External plugins are disabled by default in draw.io Desktop starting from version 19.0.3. You need to launch the app with a special flag to enable them.
+When it is working, the browser console shows:
 
-### Step 1 — Download the plugin
-
-Download `AnimateIT.js` from this repository and save it somewhere permanent, for example:
-
-```
-C:\Users\YourName\drawio-plugins\AnimateIT.js
-```
-
-### Step 2 — Enable external plugins
-
-External plugins require launching draw.io with the `--enable-plugins` flag.
-
-**Option A — Edit your desktop shortcut:**
-
-1. Right-click the draw.io shortcut on your desktop → **Properties**
-2. In the **Target** field, add the flag at the end:
-
-```
-"C:\Program Files\draw.io\draw.io.exe" --enable-plugins
+```text
+[AnimateIT] Userscript started...
+[AnimateIT] Draw.loadPlugin found...
+[AnimateIT] Ready
 ```
 
-3. Click **OK** and always launch draw.io using this shortcut
+You can also run this in DevTools:
 
-**Option B — Run from command line:**
-
-```cmd
-"C:\Program Files\draw.io\draw.io.exe" --enable-plugins
+```js
+window.__AnimateITStatus
 ```
 
-### Step 3 — Load the plugin
+`ready: true` means the userscript has attached itself to draw.io successfully.
 
-1. Open draw.io (using the modified shortcut or command above)
-2. Go to **Extras → Plugins...**
-3. Click **Add**
-4. Select your local `AnimateIT.js` file
-5. Click **OK**, then **Apply**
-6. Restart draw.io — the plugin will load automatically on every launch
+## Desktop Installation
 
-> **Note:** Always launch draw.io with `--enable-plugins` — the plugin will not load without this flag.
+External plugins are disabled by default in draw.io Desktop starting from version 19.0.3, so the app must be launched with `--enable-plugins`.
 
----
+1. Download `AnimateIT.js` and save it somewhere permanent, for example:
 
-## Installation — Web Version (app.diagrams.net)
-
-The plugin file must be hosted at a publicly accessible URL (e.g. GitHub Pages).
-
-1. Fork or copy `AnimateIT.js` to your own GitHub repository
-2. Enable **GitHub Pages** for that repository (Settings → Pages → Branch: main)
-3. Your plugin URL will be:
+   ```text
+   C:\Users\YourName\drawio-plugins\AnimateIT.js
    ```
-   https://<your-username>.github.io/<your-repo>/AnimateIT.js
-   ```
-4. Open [app.diagrams.net](https://app.diagrams.net)
-5. Go to **Extras → Plugins → Add**
-6. Paste the URL and click **OK → Apply**
-7. Reload the browser tab — the plugin is now active
 
----
+2. Edit your draw.io shortcut and add the flag to the target:
+
+   ```cmd
+   "C:\Program Files\draw.io\draw.io.exe" --enable-plugins
+   ```
+
+3. Open draw.io using that shortcut.
+4. Go to **Extras -> Plugins...**.
+5. Click **Add**, select `AnimateIT.js`, then click **OK** and **Apply**.
+6. Restart draw.io using the same shortcut.
+
+The plugin will be available from **Extras -> AnimateIT!** after restart.
+
+## Self-Hosted / Docker Installation
+
+If you host diagrams.net yourself, for example with Docker, you control the HTTP headers and plugin origin. In that setup you can use `AnimateIT.js` as a normal draw.io plugin.
+
+Recommended setup:
+
+1. Host `AnimateIT.js` from the same origin as your diagrams.net instance, or relax your CSP to allow that plugin URL.
+2. Open your self-hosted diagrams.net instance.
+3. Add the plugin through **Extras -> Plugins...**.
+4. Reload the editor.
+
+## Usage
+
+Select any connector. AnimateIT! highlights it and raises it above overlapping lines. Deselect the connector and the plugin restores the original style and layer order.
+
+Use `Ctrl + Alt + I` or **Extras -> AnimateIT!** to disable or re-enable the plugin while draw.io is open.
 
 ## Compatibility
 
-| Platform | Supported |
-|---|---|
-| draw.io Desktop (Windows) | ✅ (requires `--enable-plugins`) |
-| draw.io Web (app.diagrams.net) | ✅ |
-| draw.io for Confluence / Jira | ❌ (plugins not supported) |
+| Platform | Status | Notes |
+|---|---|---|
+| app.diagrams.net / draw.io in Chrome | Supported via Tampermonkey | Requires Tampermonkey's **Allow user scripts** permission |
+| app.diagrams.net / draw.io in other browsers | Supported via userscript manager | Site access must be enabled for the extension |
+| draw.io Desktop for Windows | Supported | Requires `--enable-plugins` |
+| Self-hosted diagrams.net / Docker | Supported | Host the plugin where your CSP allows it |
+| Confluence / Jira draw.io apps | Not supported | These environments do not allow arbitrary plugins |
 
----
+## Troubleshooting
+
+If the Tampermonkey version does not run:
+
+- Confirm that the installed script starts with `// @version      1.3.0`.
+- Open DevTools -> Console and filter by `AnimateIT`.
+- Run `window.__AnimateITStatus` in the console to see the last startup status.
+- If there are no `[AnimateIT]` messages and `window.__AnimateITStatus` is `undefined`, Tampermonkey did not run the script. In Chrome, enable **Allow user scripts** for Tampermonkey and make sure the extension has access to `app.diagrams.net`.
+- If you see a timeout waiting for `Draw.loadPlugin`, hard-reload the page after the editor has fully opened.
+- If the menu item appears but selection does nothing, check whether the selected object is an edge, not a shape.
+
+## Notes For Maintainers
+
+`AnimateIT.user.js` intentionally uses `@grant unsafeWindow` so it can access draw.io globals such as `Draw`, `mxEvent`, and `mxUtils`. A previous injected-script approach was removed because it was more fragile in Chrome and could fail before setting diagnostic status.
 
 ## License
 
-MIT — free to use, modify, and distribute.
+MIT. See [LICENSE](LICENSE).
